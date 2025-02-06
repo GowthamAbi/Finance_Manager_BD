@@ -32,5 +32,5 @@ app.use("/api/goals", require("./routes/goalRoutes"));
 app.use("/api/reports", require("./routes/reportRoutes"));
 app.use("/api/email", require("./routes/emailRoutes"));
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000 ;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

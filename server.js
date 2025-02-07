@@ -27,6 +27,7 @@ app.use(cors({ origin: "http://localhost:5173", credentials: true })); // ✅ Al
 
 
 app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/income", require("./routes/incomeRoutes"));
 app.use("/api/expenses", require("./routes/expenseRoutes"));
 app.use("/api/budgets", require("./routes/budgetRoutes"));
 app.use("/api/goals", require("./routes/goalRoutes"));

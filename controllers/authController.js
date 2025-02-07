@@ -22,31 +22,36 @@ exports.register = async (req, res) => {
 
 exports.login = async (req, res) => {
     try {
-        const { email, password } = req.body;
-        const user = await User.findOne({ email });
-
-        if (!user) return res.status(400).json({ message: "Invalid credentials" });
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
-
-        // ✅ Generate Token
-        const token = jwt.sign({ user: { id: user.id } }, process.env.JWT_SECRET, { expiresIn: "1h" });
-
-        // ✅ Set HTTP-Only Cookie
-        res.cookie("token", token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
-            maxAge: 3600000, // 1 hour
-        });
-
-        res.json({ message: "Login successful!" });
-        console.log("Login Sucessfully")
+      const { email, password } = req.body;
+  
+      // Find user by email
+      const user = await User.findOne({ email });
+      if (!user) return res.status(400).json({ message: "Invalid credentials" });
+  
+      // Compare hashed password with entered password
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+  
+      // Generate JWT token (user id is stored in token)
+      const token = jwt.sign({ user: { id: user.id } }, process.env.JWT_SECRET, { expiresIn: "1h" });
+  
+      // Set token in HTTP-only cookie
+      res.cookie("token", token, {
+        httpOnly: true,  // Cannot be accessed by JavaScript
+        secure: process.env.NODE_ENV === "production",  // Set to true for HTTPS
+        sameSite: "strict",  // Prevent cross-site request forgery
+        maxAge: 3600000, // 1 hour in milliseconds
+      });
+  
+      // Send response with success message
+      return res.json({ message: "Login successful!" });
+  
     } catch (err) {
-        res.status(500).json({ message: "Server error", error: err.message });
+      console.error(err);
+      return res.status(500).json({ message: "Server error", error: err.message });
     }
-};
+  };
+  
 
 exports.logout = (req, res) => {
     res.clearCookie("token");

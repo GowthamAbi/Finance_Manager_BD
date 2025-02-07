@@ -4,6 +4,7 @@ const expenseController = require("../controllers/expenseController");
 const authMiddleware = require("../middleware/authMiddleware");
 
 router.post("/", authMiddleware, expenseController.addExpense);
+router.post("/recurring", authMiddleware, expenseController.addExpenserecurring);
 router.get("/", authMiddleware, expenseController.getExpenses);
 
 module.exports = router;

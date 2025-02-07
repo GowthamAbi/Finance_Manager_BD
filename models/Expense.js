@@ -9,3 +9,14 @@ const expenseSchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model("Expense", expenseSchema);
+
+const expenserecurringSchema = new mongoose.Schema({
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    amount: { type: Number, required: true },
+    date: { type: Date, default: Date.now },
+    category: { type: String, required: true },
+    description: { type: String },
+    interval:{ type: String }
+});
+
+module.exports = mongoose.model("Expenserecurring", expenserecurringSchema);

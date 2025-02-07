@@ -11,6 +11,17 @@ exports.addExpense = async (req, res) => {
     }
 };
 
+exports.addExpenserecurring = async (req, res) => {
+    try {
+        const { amount, category, description,interval } = req.body;
+        const expense = new Expense({ userId: req.user.id, amount, category, description ,interval});
+        await expense.save();
+        res.status(201).json(expense);
+    } catch (err) {
+        res.status(500).json({ message: "Server error", error: err.message });
+    }
+};
+
 exports.getExpenses = async (req, res) => {
     try {
         const expenses = await Expense.find({ userId: req.user.id });

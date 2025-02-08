@@ -40,3 +40,21 @@ exports.getExpensesRecurring = async (req, res) => {
         res.status(500).json({ message: "Server error", error: err.message });
     }
 };
+
+exports.updateExpense=async(req,res)=>{
+    try {
+        const expenses = await Expenses.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        res.json(expenses);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+}
+
+exports.deleteExpense=async(req,res)=>{
+    try {
+        await expenses.findByIdAndDelete(req.params.id);
+        res.json({ message: "expense deleted" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}

@@ -8,5 +8,8 @@ router.post("/recurring", authMiddleware, expenseController.addExpenserecurring)
 router.get("/", authMiddleware, expenseController.getExpenses);
 router.get("/recurring", authMiddleware, expenseController.getExpensesRecurring);
 
+router.patch("/:id", authMiddleware, expenseController.updateExpense);
+router.delete("/:id", authMiddleware, expenseController.deleteExpense);
+
 
 module.exports = router;

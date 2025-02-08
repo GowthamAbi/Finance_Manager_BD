@@ -65,7 +65,7 @@ io.on('connection', (socket) => {
     console.log('A user disconnected');
   });
 });
-
+console.log("All ok")
 // Start the server and the Socket.io server on the same port
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {

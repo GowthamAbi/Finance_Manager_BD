@@ -5,7 +5,7 @@ const sendEmail = require("../utils/sendEmail"); // Import email sender
 const authMiddleware = require("../middleware/authMiddleware");
 
 // Get all due bills within the next 7 days & send email reminders
-router.get("/due-bills", authMiddleware, async (req, res) => {
+router.get("/", authMiddleware, async (req, res) => {
     try {
         const today = new Date();
         const nextWeek = new Date();

@@ -6,10 +6,14 @@ const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
 const logger = require("./utils/logger");
 const http = require('http');
-const socketIo = require('socket.io');
+const { Server } = require('socket.io');
 
 dotenv.config();
 const app = express();
+
+// Create HTTP server
+const server = http.createServer(app);
+const io = new Server(server, { cors: { origin: "*" } });
 
 // Middleware
 app.use(express.json());
@@ -22,17 +26,10 @@ app.use(cors({
 // Connect to MongoDB
 connectDB();
 
-
 // Logger middleware
 app.use(logger);
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error("🔥 Server Error:", err);
-  res.status(500).json({ message: "Internal Server Error", error: err.message });
-});
-
-// API routes
+// API Routes
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/income", require("./routes/incomeRoutes"));
 app.use("/api/expenses", require("./routes/expenseRoutes"));
@@ -41,36 +38,28 @@ app.use("/api/goals", require("./routes/goalRoutes"));
 app.use("/api/reports", require("./routes/reportRoutes"));
 app.use("/api/due-bills", require("./routes/emailRoutes"));
 
-//Socket
-// Create HTTP server for socket.io
-const server = http.createServer(app);
-
-// Initialize socket.io
-const io = socketIo(server, {
-  cors: {
-    origin: 'http://localhost:5173', // Allow connections from your frontend
-    methods: ['GET', 'POST'],        // Allow GET and POST methods
-    credentials: true                // Allow cookies/credentials
-  }
+// Error handling middleware (MUST be declared after routes)
+app.use((err, req, res, next) => {
+  console.error("🔥 Server Error:", err);
+  res.status(500).json({ message: "Internal Server Error", error: err.message });
 });
 
-// Handle WebSocket connections
-io.on('connection', (socket) => {
-  console.log('A user connected');
-  
-  // Example of emitting a message to the frontend
-  socket.emit('message', 'Hello from the WebSocket server!');
-  
-  socket.on('disconnect', () => {
-    console.log('A user disconnected');
-  });
-});
-console.log("All ok")
-// Start the server and the Socket.io server on the same port
+// Start the server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
 
+// ✅ Setup Socket.io
+io.on('connection', (socket) => {
+  console.log('🟢 A user connected');
 
+  // Example: Sending a budget overage alert
+  setTimeout(() => {
+      socket.emit('budgetAlert', '⚠️ Budget exceeded in Food category!');
+  }, 5000); // Simulating an alert after 5 seconds
 
+  socket.on('disconnect', () => {
+      console.log('🔴 A user disconnected');
+  });
+});

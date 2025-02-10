@@ -53,6 +53,7 @@ app.use("/api/budgets", require("./routes/budgetRoutes"));
 app.use("/api/goals", require("./routes/goalRoutes"));
 app.use("/api/reports", require("./routes/reportRoutes"));
 app.use("/api/due-bills", require("./routes/emailRoutes"));
+app.use("/api/transactions", require("./routes/transactionRoutes"));
 // app.use("/api/messages", require("./routes/messageRoutes"));
 
 

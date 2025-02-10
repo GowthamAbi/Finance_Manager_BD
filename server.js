@@ -7,39 +7,45 @@ const connectDB = require("./config/db");
 const logger = require("./utils/logger");
 const http = require("http");
 const { Server } = require("socket.io");
+const sendEmail = require("./utils/sendEmail");
+const DueBill = require("./models/DueBill");
+const Budget = require("./models/Budget");
+const { Expense } = require("./models/Expense"); // Corrected import for Expense model
+const Message = require("./models/Message");
+const cron = require("node-cron");
 
 dotenv.config();
 const app = express();
 
-// Create HTTP server
+const PORT = process.env.PORT || 3000;
 const server = http.createServer(app);
 
-// ✅ Correct WebSocket Setup
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173", // Your frontend React app
+    origin: "http://localhost:5173",
     methods: ["GET", "POST"],
     credentials: true,
   },
-  transports: ["websocket", "polling"], // ✅ Ensure WebSocket works
+  transports: ["websocket", "polling"],
 });
 
+connectDB().catch((error) => {
+  console.error("❌ MongoDB Connection Failed:", error);
+  process.exit(1);
+});
+
+// ✅ Middlewares
 app.use(express.json());
-app.use(cookieParser()); // ✅ Enable cookie parsing
+app.use(cookieParser());
 app.use(
   cors({
-    origin: "http://localhost:5173", // Allow frontend origin
-    credentials: true, // Allow credentials (cookies, HTTP headers, etc.)
+    origin: "http://localhost:5173",
+    credentials: true,
   })
 );
-
-// Connect to MongoDB
-connectDB();
-
-// Logger middleware
 app.use(logger);
 
-// API Routes
+// ✅ API Routes
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/income", require("./routes/incomeRoutes"));
 app.use("/api/expenses", require("./routes/expenseRoutes"));
@@ -47,26 +53,55 @@ app.use("/api/budgets", require("./routes/budgetRoutes"));
 app.use("/api/goals", require("./routes/goalRoutes"));
 app.use("/api/reports", require("./routes/reportRoutes"));
 app.use("/api/due-bills", require("./routes/emailRoutes"));
+// app.use("/api/messages", require("./routes/messageRoutes"));
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error("🔥 Server Error:", err);
-  res.status(500).json({ message: "Internal Server Error", error: err.message });
+
+
+
+
+
+
+// ✅ CRON JOB to Check Due Bills and Send Email Notifications
+cron.schedule("0 0 * * *", async () => {
+  try {
+    console.log("🔄 Checking for due bills...");
+
+    const today = new Date();
+    const twoDaysLater = new Date();
+    twoDaysLater.setDate(today.getDate() + 2);
+
+    const dueBills = await DueBill.find({
+      dueDate: { $lte: twoDaysLater, $gte: today },
+    });
+
+    if (dueBills.length > 0) {
+      for (const bill of dueBills) {
+        console.log(`📧 Sending reminder email for ${bill.name}`);
+        await sendEmail(
+          bill.userEmail,
+          `Reminder: ${bill.name} Due Soon!`,
+          `Your bill "${bill.name}" is due on ${bill.dueDate.toDateString()}. Please pay on time.`
+        );
+
+        // ✅ Emit notification via WebSocket
+        io.emit("dueBillNotification", {
+          title: "Due Bill Reminder",
+          message: `🚨 Your bill "${bill.name}" is due soon!`,
+        });
+      }
+
+      console.log(`✅ Emails sent for ${dueBills.length} due bills.`);
+    } else {
+      console.log("✅ No due bills found.");
+    }
+  } catch (error) {
+    console.error("❌ Error checking due bills:", error);
+  }
 });
 
-// ✅ Setup Socket.io
-io.on("connection", (socket) => {
-  console.log(`🟢 A user connected: ${socket.id}`);
 
-  socket.emit("budgetAlert", "⚠️ Budget exceeded in Food category!");
 
-  socket.on("disconnect", () => {
-    console.log(`🔴 A user disconnected: ${socket.id}`);
-  });
-});
-
-// ✅ Ensure Only One `server.listen()` Call
-const PORT = process.env.PORT || 5000;
+// ✅ Start the backend server
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`🚀 Backend & WebSocket Server running on http://localhost:${PORT}`);
 });

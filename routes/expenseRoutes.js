@@ -10,6 +10,10 @@ router.get("/recurring", authMiddleware, expenseController.getExpensesRecurring)
 
 router.patch("/:id", authMiddleware, expenseController.updateExpense);
 router.delete("/:id", authMiddleware, expenseController.deleteExpense);
+router.patch("/recurring/:id", expenseController.updateRecurringExpense);
+
+
+router.delete("/recurring/:id", authMiddleware, expenseController.deleteExpensesRecurring);
 
 
 module.exports = router;

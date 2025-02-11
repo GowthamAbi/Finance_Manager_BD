@@ -26,3 +26,16 @@ const getTotalAmounts = async (req, res) => {
 };
 
 module.exports = { getTotalAmounts };
+
+
+
+const getTransactions = async (req, res) => {
+  try {
+    const transactions = await Transaction.find({ userId: req.user.id });
+    res.status(200).json(transactions);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching transactions", error });
+  }
+};
+
+module.exports = { getTransactions }; // ✅ Ensure this export is correct

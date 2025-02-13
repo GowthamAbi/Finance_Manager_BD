@@ -1,15 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const { getTransactions, getTotals } = require("../controllers/transactionController"); // Ensure correct import
+const transactionsController = require("../controllers/transactionController");
 const authMiddleware = require("../middleware/authMiddleware");
 
-// Public route for getting all transactions (No authentication needed)
-router.get("/", getTransactions);
+router.get("/", authMiddleware, transactionsController.getTransactions);
+router.get("/total", authMiddleware, transactionsController.getTotalAmounts); // ✅ Fixed function name
 
-// Protected route for getting the totals, requires authentication
-router.get("/transactions/total", authMiddleware, getTotals);
-
-// Optionally, you can remove the console log after confirming everything is working:
-console.log("getTransactions function:", getTransactions);
+console.log("Transaction routes loaded successfully");
 
 module.exports = router;

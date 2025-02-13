@@ -10,25 +10,25 @@ const { Server } = require("socket.io");
 const sendEmail = require("./utils/sendEmail");
 const DueBill = require("./models/DueBill");
 const Budget = require("./models/Budget");
-const Expense = require("./models/Expense"); // Fixed import for Expense model
+const Expense = require("./models/Expense");
 const Message = require("./models/Message");
 const cron = require("node-cron");
 
 dotenv.config();
 const app = express();
-
-const PORT = process.env.PORT || 5000; // Updated default port
+const PORT = process.env.PORT || 5000;
 const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin:  "http://localhost:5173",
     methods: ["GET", "POST"],
     credentials: true,
   },
   transports: ["websocket", "polling"],
 });
-
+//process.env.CLIENT_URL ||
+// ✅ Connect to MongoDB
 connectDB().catch((error) => {
   console.error("❌ MongoDB Connection Failed:", error);
   process.exit(1);
@@ -39,7 +39,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
     credentials: true,
   })
 );
@@ -53,8 +53,17 @@ app.use("/api/budgets", require("./routes/budgetRoutes"));
 app.use("/api/goals", require("./routes/goalRoutes"));
 app.use("/api/reports", require("./routes/reportRoutes"));
 app.use("/api/due-bills", require("./routes/emailRoutes"));
-
 app.use("/api/transactions", require("./routes/transactionRoutes"));
+
+// ✅ WebSocket Event Handling
+io.on("connection", (socket) => {
+  console.log("🔗 New WebSocket Connection");
+
+  socket.on("disconnect", () => {
+    console.log("❌ Client disconnected");
+  });
+});
+
 // ✅ CRON JOB to Check Due Bills and Send Email Notifications
 cron.schedule("0 0 * * *", async () => {
   try {
@@ -83,7 +92,6 @@ cron.schedule("0 0 * * *", async () => {
           message: `🚨 Your bill "${bill.name}" is due soon!`,
         });
       }
-
       console.log(`✅ Emails sent for ${dueBills.length} due bills.`);
     } else {
       console.log("✅ No due bills found.");
@@ -95,6 +103,6 @@ cron.schedule("0 0 * * *", async () => {
 
 // ✅ Start the backend server
 server.listen(PORT, () => {
-  console.log(`🚀 Backend & WebSocket Server running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
 

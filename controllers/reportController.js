@@ -22,3 +22,16 @@ exports.generateCsvReport = async (req, res) => {
         res.status(500).json({ message: "Error generating CSV", error: err.message });
     }
 };
+
+exports.getAllReports = async (req, res) => {
+    try {
+      const userId = req.user.id; // Ensure user authentication works
+      const expenses = await Expense.find({ userId });
+      const budgets = await Budget.find({ userId });
+  
+      res.json({ expenses, budgets });
+    } catch (error) {
+      console.error("Error fetching reports:", error);
+      res.status(500).json({ error: "Failed to fetch reports" });
+    }
+  };

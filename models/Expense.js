@@ -15,8 +15,7 @@ const expenserecurringSchema = new mongoose.Schema({
     amount: { type: Number, required: true },
     date: { type: Date, default: Date.now },
     category: { type: String, required: true },
-    description: { type: String },
-    interval: { type: String, required: true },
+    expenseName: { type: String },
     nextDue: { type: Date, required: true } // ✅ Ensure nextDue is a Date
 });
 

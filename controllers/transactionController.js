@@ -1,6 +1,8 @@
+// controllers/transactionController.js
+
 const Transaction = require("../models/transactionModel");
 
-// Get Total Sum of Income, Expenses, Budget, and Goals
+// Get Total Sum of Income, Expenses, Budget, and Goals (with aggregation)
 const getTotalAmounts = async (req, res) => {
   try {
     const totals = await Transaction.aggregate([
@@ -25,10 +27,7 @@ const getTotalAmounts = async (req, res) => {
   }
 };
 
-module.exports = { getTotalAmounts };
-
-
-
+// Get All Transactions
 const getTransactions = async (req, res) => {
   try {
     const transactions = await Transaction.find({ userId: req.user.id });
@@ -38,4 +37,41 @@ const getTransactions = async (req, res) => {
   }
 };
 
-module.exports = { getTransactions }; // ✅ Ensure this export is correct
+// Get Totals (manual calculation)
+const getTotals = async (req, res) => {
+  try {
+    const userId = req.user.id; // Extract user ID from JWT
+
+    // Fetch all transactions for the user
+    const transactions = await Transaction.find({ userId });
+
+    // Calculate totals based on transactions
+    let income = 0;
+    let expense = 0;
+    let budget = 0;
+    let goal = 0;
+
+    transactions.forEach((transaction) => {
+      if (transaction.type === "income") {
+        income += transaction.amount;
+      } else if (transaction.type === "expense") {
+        expense += transaction.amount;
+      }
+      if (transaction.category === "budget") {
+        budget += transaction.amount;
+      }
+      if (transaction.category === "goal") {
+        goal += transaction.amount;
+      }
+    });
+
+    const totals = { income, expense, budget, goal };
+    return res.status(200).json(totals);
+  } catch (err) {
+    console.error("Error fetching totals:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+
+module.exports = { getTotalAmounts, getTransactions, getTotals };

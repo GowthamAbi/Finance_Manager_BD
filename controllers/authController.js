@@ -39,6 +39,11 @@ exports.login = async (req, res) => {
       maxAge: 3600000,
     });
 
+    console.log("🔹 Request Headers:", req.headers);
+console.log("🔹 Received Token:", req.headers.authorization);
+console.log("🔹 Authenticated User:", req.user);
+
+
     res.json({ message: "Login successful!", token, user });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
@@ -93,11 +98,11 @@ exports.uploadProfilePic = async (req, res) => {
 
     const imageUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
 
-    // Force MongoDB update
-    const user = await User.findOneAndUpdate(
-      { _id: req.user.id },
+    // ✅ Ensure the database update is properly executed
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
       { $set: { profilePicture: imageUrl } },
-      { new: true }
+      { new: true, runValidators: true }
     );
 
     if (!user) {
@@ -109,5 +114,22 @@ exports.uploadProfilePic = async (req, res) => {
   } catch (err) {
     console.error("Error uploading profile picture:", err);
     res.status(500).json({ message: "Error uploading profile picture", error: err.message });
+  }
+};
+
+
+
+exports.getUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("name email phone dob address officeName profilePicture");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json(user);
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };

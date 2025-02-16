@@ -4,7 +4,10 @@ const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    phone: { type: String, required: true },
+    phone: { type: Number },
+    dob: {type: Date},
+    address: {type: String},
+    officeName: {type: String},
     password: { type: String, required: true },
     profilePicture: { type: String, default: "default-profile.png" },
   },
@@ -12,7 +15,5 @@ const userSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model("User", userSchema);
-
-
 
 

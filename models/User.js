@@ -7,11 +7,12 @@ const userSchema = new mongoose.Schema(
     phone: { type: String, required: true },
     password: { type: String, required: true },
     profilePicture: { type: String, default: "default-profile.png" },
-    address: { type: String, default: "" },
-    officeName: { type: String, default: "" },
-    dob: { type: Date },
   },
   { timestamps: true }
 );
 
 module.exports = mongoose.model("User", userSchema);
+
+
+
+

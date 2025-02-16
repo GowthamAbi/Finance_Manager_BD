@@ -1,17 +1,19 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const multer = require("multer");
+const path = require("path");
 
-// User Registration
+// ✅ User Registration
 exports.register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, phone, password } = req.body;
 
     let user = await User.findOne({ email });
     if (user) return res.status(400).json({ message: "User already exists" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    user = new User({ name, email, password: hashedPassword });
+    user = new User({ name, email, phone, password: hashedPassword });
 
     await user.save();
 
@@ -21,7 +23,7 @@ exports.register = async (req, res) => {
   }
 };
 
-// User Login
+// ✅ User Login
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -34,13 +36,13 @@ exports.login = async (req, res) => {
 
     const token = jwt.sign({ user: { id: user.id } }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
-    if (email === 'gowthamabi1412@gmail.com' && password === '123456') {
-      const user = { id: '67a6f52faeae403739c16dae' }; // Replace with actual user data
-      const token = jwt.sign({ user }, 'Gowtham', { expiresIn: '1h' });
-  
+    if (email === "gowthamabi1412@gmail.com" && password === "123456") {
+      const user = { id: "67a6f52faeae403739c16dae" }; // Replace with actual user data
+      const token = jwt.sign({ user }, "Gowtham", { expiresIn: "1h" });
+
       return res.json({
-        message: 'Login successful!',
-        token: token, // ✅ Ensure token is explicitly returned
+        message: "Login successful!",
+        token: token,
         user
       });
     }
@@ -51,34 +53,25 @@ exports.login = async (req, res) => {
       sameSite: "strict",
       maxAge: 3600000,
     });
-    console.log(`token:${token}`)
+
     return res.json({
       message: "Login successful!",
-      token: token, // Ensure token is always returned
+      token: token,
       user,
     });
-    
-
-
-
-
-
-
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Server error", error: err.message });
   }
-
-
 };
 
-// User Logout
+// ✅ User Logout
 exports.logout = (req, res) => {
   res.clearCookie("token");
   res.status(200).json({ message: "Logged out successfully" });
 };
 
-// Get Profile
+// ✅ Get Profile
 exports.getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
@@ -88,19 +81,67 @@ exports.getProfile = async (req, res) => {
   }
 };
 
-// Update Profile
+// Configure Multer Storage
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/");
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  },
+});
+
+const upload = multer({ storage });
+
+// ✅ Get Account Summary
+exports.getAccountSummary = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("name email phone profilePic");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.json({
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      profilePic: user.profilePic,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+// ✅ Upload Profile Picture
+exports.uploadProfilePic = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.profilePic = req.file.filename;
+    await user.save();
+
+    res.json({ message: "Profile picture updated!", profilePic: user.profilePic });
+  } catch (err) {
+    res.status(500).json({ message: "Error uploading profile picture", error: err.message });
+  }
+};
+
+
+// ✅ Update Profile
 exports.updateProfile = async (req, res) => {
   try {
-    const { name, email, profilePicture } = req.body;
+    const { name, phone, address, officeName, dob, newPassword } = req.body;
+    
+    let updatedFields = { name, phone, address, officeName, dob };
 
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user.id,
-      { name, email, profilePicture },
-      { new: true }
-    ).select("-password");
+    if (newPassword) {
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      updatedFields.password = hashedPassword;
+    }
 
-    res.json(updatedUser);
+    const updatedUser = await User.findByIdAndUpdate(req.user.id, updatedFields, { new: true }).select("-password");
+
+    res.json({ message: "Profile updated successfully!", updatedUser });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 };

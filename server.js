@@ -11,7 +11,6 @@ const sendEmail = require("./utils/sendEmail");
 const DueBill = require("./models/DueBill");
 const Budget = require("./models/Budget");
 const Expense = require("./models/Expense");
-const Message = require("./models/Message");
 const cron = require("node-cron");
 
 dotenv.config();
@@ -53,7 +52,6 @@ app.use("/api/budgets", require("./routes/budgetRoutes"));
 app.use("/api/goals", require("./routes/goalRoutes"));
 app.use("/api/reports", require("./routes/reportRoutes"));
 app.use("/api/due-bills", require("./routes/emailRoutes"));
-app.use("/transactions", require("./routes/transactionRoutes"));
 
 // ✅ WebSocket Event Handling
 io.on("connection", (socket) => {

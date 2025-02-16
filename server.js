@@ -9,8 +9,6 @@ const http = require("http");
 const { Server } = require("socket.io");
 const sendEmail = require("./utils/sendEmail");
 const DueBill = require("./models/DueBill");
-const Budget = require("./models/Budget");
-const Expense = require("./models/Expense");
 const cron = require("node-cron");
 
 dotenv.config();
@@ -18,19 +16,28 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const server = http.createServer(app);
 
-const io = new Server(server, {
-  cors: {
-    origin:  "http://localhost:5173",
-    methods: ["GET", "POST"],
-    credentials: true,
-  },
-  transports: ["websocket", "polling"],
-});
-//process.env.CLIENT_URL ||
 // ✅ Connect to MongoDB
 connectDB().catch((error) => {
   console.error("❌ MongoDB Connection Failed:", error);
   process.exit(1);
+});
+
+// ✅ WebSocket Setup
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CLIENT_URL || "https://finance-manager-web.netlify.app",
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+  allowEIO3: true, // Allow older socket.io clients
+});
+
+io.on("connection", (socket) => {
+  console.log("🔗 New WebSocket Connection");
+
+  socket.on("disconnect", () => {
+    console.log("❌ Client disconnected");
+  });
 });
 
 // ✅ Middlewares
@@ -38,7 +45,8 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: process.env.CLIENT_URL || "https://finance-manager-web.netlify.app",
+    methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
 );
@@ -53,16 +61,7 @@ app.use("/api/goals", require("./routes/goalRoutes"));
 app.use("/api/reports", require("./routes/reportRoutes"));
 app.use("/api/due-bills", require("./routes/emailRoutes"));
 
-// ✅ WebSocket Event Handling
-io.on("connection", (socket) => {
-  console.log("🔗 New WebSocket Connection");
-
-  socket.on("disconnect", () => {
-    console.log("❌ Client disconnected");
-  });
-});
-
-// ✅ CRON JOB to Check Due Bills and Send Email Notifications
+// ✅ CRON JOB - Check Due Bills & Send Email Notifications
 cron.schedule("0 0 * * *", async () => {
   try {
     console.log("🔄 Checking for due bills...");
@@ -99,8 +98,7 @@ cron.schedule("0 0 * * *", async () => {
   }
 });
 
-// ✅ Start the backend server
+// ✅ Start Server
 server.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
-
